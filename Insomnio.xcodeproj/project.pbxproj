@@ -400,6 +400,8 @@
 				DEVELOPMENT_TEAM = VY8D8XH3TV;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Yooo we need to use yo mic";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "yooo we gon recognize yo speech iykwim";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -432,6 +434,8 @@
 				DEVELOPMENT_TEAM = VY8D8XH3TV;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Yooo we need to use yo mic";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "yooo we gon recognize yo speech iykwim";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
