@@ -16,7 +16,7 @@ struct RecordView: View {
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            WovenThreadBackground(viewModel: viewModel)
 
             VStack(spacing: 40) {
                 Text("Let me hear about it.")

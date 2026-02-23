@@ -24,7 +24,7 @@ struct ContentView: View {
                     case .review:
                         ReviewView(viewModel: viewModel)
                     case .exit:
-                        ExitView()
+                        ExitView(viewModel: viewModel)
                     }
                 }
         }

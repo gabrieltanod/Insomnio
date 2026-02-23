@@ -9,11 +9,13 @@ import SwiftUI
 
 struct ExitView: View {
 
+    var viewModel: FlowViewModel
+
     @State private var textOpacity: Double = 0
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            WovenThreadBackground(viewModel: viewModel)
 
             Text("We got you.\nNow go back to sleep.")
                 .font(.system(size: 28, weight: .medium, design: .serif))

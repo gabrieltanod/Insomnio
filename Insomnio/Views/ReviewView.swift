@@ -18,7 +18,7 @@ struct ReviewView: View {
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            WovenThreadBackground(viewModel: viewModel)
 
             VStack(spacing: 32) {
                 Spacer()
