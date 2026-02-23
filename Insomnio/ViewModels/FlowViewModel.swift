@@ -29,9 +29,10 @@ final class FlowViewModel {
 
     // MARK: - Intro
 
-    private var introTimerTask: Task<Void, Never>?
-
-    // MARK: - Recording
+    /// Advances past the intro screen to the record screen.
+    func skipIntro() {
+        navigateTo(.record)
+    }
 
     private(set) var isRecording = false
     var transcript: String = ""
@@ -54,24 +55,6 @@ final class FlowViewModel {
     ) {
         self.audioRecorder = audioRecorder
         self.summaryService = summaryService
-    }
-
-    // MARK: - Intro Logic
-
-    /// Starts a 3-second timer that auto-advances to the record screen.
-    func startIntroTimer() {
-        introTimerTask?.cancel()
-        introTimerTask = Task {
-            try? await Task.sleep(for: .seconds(3))
-            guard !Task.isCancelled else { return }
-            navigateTo(.record)
-        }
-    }
-
-    /// Cancels the intro timer (used when the user taps early).
-    func skipIntro() {
-        introTimerTask?.cancel()
-        navigateTo(.record)
     }
 
     // MARK: - Recording Logic
