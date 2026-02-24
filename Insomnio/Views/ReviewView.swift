@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct ReviewView: View {
 
@@ -103,4 +104,9 @@ struct ReviewView: View {
             buttonsOpacity = 1
         }
     }
+}
+
+#Preview {
+    ReviewView(viewModel: .previewWithThoughts)
+        .modelContainer(for: DailyLog.self, inMemory: true)
 }

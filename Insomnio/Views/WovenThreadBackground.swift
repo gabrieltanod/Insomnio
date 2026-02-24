@@ -138,3 +138,7 @@ struct WovenThreadBackground: View {
         return Color(red: r, green: g, blue: b)
     }
 }
+
+#Preview {
+    WovenThreadBackground(viewModel: FlowViewModel())
+}

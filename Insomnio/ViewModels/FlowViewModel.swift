@@ -119,4 +119,18 @@ final class FlowViewModel {
         isRecording = false
         isProcessing = false
     }
+
+    // MARK: - Preview Helpers
+
+    #if DEBUG
+    static var previewWithThoughts: FlowViewModel {
+        let vm = FlowViewModel()
+        vm.extractedThoughts = [
+            "You're worried about tomorrow's meeting — specifically the presentation deck.",
+            "There's unresolved tension from a conversation earlier today.",
+            "You feel behind on a personal goal you set last month."
+        ]
+        return vm
+    }
+    #endif
 }

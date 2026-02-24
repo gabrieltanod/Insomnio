@@ -19,7 +19,7 @@ struct ExitView: View {
 
             Text("We got you.\nNow go back to sleep.")
                 .font(.system(size: 28, weight: .medium, design: .serif))
-                .foregroundStyle(Color(red: 0.85, green: 0.55, blue: 0.35))
+                .foregroundStyle(Color("Peach"))
                 .multilineTextAlignment(.center)
                 .opacity(textOpacity)
         }
@@ -30,4 +30,8 @@ struct ExitView: View {
         }
         .navigationBarBackButtonHidden(true)
     }
+}
+
+#Preview {
+    ExitView(viewModel: FlowViewModel())
 }

@@ -21,7 +21,7 @@ struct RecordView: View {
             VStack(spacing: 40) {
                 Text("Let me hear about it.")
                     .font(.system(size: 28, weight: .medium, design: .serif))
-                    .foregroundStyle(Color(red: 0.85, green: 0.55, blue: 0.35))
+                    .foregroundStyle(Color("Peach"))
                     .multilineTextAlignment(.center)
                     .opacity(textOpacity)
 
@@ -81,4 +81,8 @@ struct RecordView: View {
         }
         .navigationBarBackButtonHidden(true)
     }
+}
+
+#Preview {
+    RecordView(viewModel: FlowViewModel())
 }

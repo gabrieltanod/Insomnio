@@ -21,8 +21,8 @@ struct IntroView: View {
                 Spacer()
 
                 Text("Somebody's having\ntrouble sleeping.")
-                    .font(.system(size: 28, weight: .medium, design: .serif))
-                    .foregroundStyle(Color(red: 0.85, green: 0.55, blue: 0.35))
+                    .font(.system(size: 28, weight: .medium, design: .monospaced))
+                    .foregroundStyle(Color("Ash"))
                     .multilineTextAlignment(.center)
 
                 Button {
@@ -45,3 +45,8 @@ struct IntroView: View {
         .navigationBarBackButtonHidden(true)
     }
 }
+
+#Preview {
+    IntroView(viewModel: FlowViewModel())
+}
+
