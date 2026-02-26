@@ -12,8 +12,11 @@ struct RecordView: View {
     @Bindable var viewModel: FlowViewModel
 
     @State private var textOpacity: Double = 0
-    @State private var pulseScale: CGFloat = 1.0
+    @State private var pulseAnimates = false
     @FocusState private var isTextFieldFocused: Bool
+
+    // Circadian color
+    private let terracotta = Color(red: 0.72, green: 0.42, blue: 0.27) // #B86A44
 
     var body: some View {
         ZStack {
@@ -25,14 +28,11 @@ struct RecordView: View {
 
                 // MARK: - Header
 
-                Text(viewModel.inputMode == .voice
-                     ? "Let me hear about it."
-                     : "Let me hear about it.")
+                Text("Let me hear about it.")
                     .font(.system(size: 25, weight: .medium, design: .monospaced))
                     .foregroundStyle(Color.white)
                     .multilineTextAlignment(.center)
                     .opacity(textOpacity)
-                    .animation(.easeInOut(duration: 0.3), value: viewModel.inputMode)
 
                 if viewModel.isProcessing {
 
@@ -63,17 +63,31 @@ struct RecordView: View {
 
                 // MARK: - Input Mode Toggle
 
-                if !viewModel.isProcessing {
+                if !viewModel.isProcessing && !viewModel.isRecording {
                     inputModeToggle
                         .padding(.bottom, 48)
                 }
             }
         }
-        .contentShape(Rectangle())
-        .gesture(longPressGesture)
         .onAppear {
             withAnimation(.easeIn(duration: 0.8)) {
                 textOpacity = 1
+            }
+        }
+        .onChange(of: viewModel.isRecording) { _, isNowRecording in
+            if isNowRecording {
+                // Start the breathing pulse
+                pulseAnimates = false
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                    withAnimation(.easeInOut(duration: 4.0).repeatForever(autoreverses: false)) {
+                        pulseAnimates = true
+                    }
+                }
+            } else {
+                // Stop the pulse immediately
+                withAnimation(.linear(duration: 0.1)) {
+                    pulseAnimates = false
+                }
             }
         }
         .navigationBarBackButtonHidden(true)
@@ -84,42 +98,63 @@ struct RecordView: View {
     private var voiceModeContent: some View {
         VStack(spacing: 24) {
             // Live transcript display
-            if !viewModel.transcript.isEmpty || viewModel.isRecording {
-                Text(viewModel.isRecording
-                     ? (viewModel.speechService.transcript.isEmpty
-                        ? "Listening…"
-                        : viewModel.speechService.transcript)
-                     : "")
+            if viewModel.isRecording {
+                Text(viewModel.speechService.transcript.isEmpty
+                     ? "Listening…"
+                     : viewModel.speechService.transcript)
                     .font(.system(size: 15, weight: .regular, design: .monospaced))
                     .foregroundStyle(Color(red: 0.65, green: 0.42, blue: 0.25).opacity(0.8))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 32)
                     .lineLimit(4)
+                    .transition(.opacity)
             }
 
-            // Pulsing record indicator
+            // MARK: - Record Button with Breathing Pulse
+
             ZStack {
-                if viewModel.isRecording {
-                    Circle()
-                        .fill(Color(red: 0.8, green: 0.3, blue: 0.2).opacity(0.3))
-                        .frame(width: 100, height: 100)
-                        .scaleEffect(pulseScale)
-                }
-
+                // Breathing pulse ring — expands over 4 seconds
                 Circle()
-                    .fill(viewModel.isRecording
-                          ? Color(red: 0.8, green: 0.3, blue: 0.2)
-                          : Color(red: 0.85, green: 0.55, blue: 0.35))
-                    .frame(width: 60, height: 60)
+                    .stroke(terracotta.opacity(0.3), lineWidth: 2)
+                    .frame(width: 80, height: 80)
+                    .scaleEffect(pulseAnimates ? 2.0 : 1.0)
+                    .opacity(pulseAnimates ? 0.0 : 0.4)
+                    .opacity(viewModel.isRecording ? 1 : 0)
 
-                Image(systemName: "mic.fill")
-                    .font(.system(size: 22))
-                    .foregroundStyle(.black.opacity(0.8))
+                // Morphing button: Circle → Rounded Square
+                Button {
+                    handleRecordTap()
+                } label: {
+                    RoundedRectangle(cornerRadius: viewModel.isRecording ? 6 : 32)
+                        .fill(terracotta)
+                        .frame(
+                            width: viewModel.isRecording ? 32 : 64,
+                            height: viewModel.isRecording ? 32 : 64
+                        )
+                        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: viewModel.isRecording)
+                }
             }
 
-            Text(viewModel.isRecording ? "Release to stop" : "Hold to speak")
-                .font(.system(size: 14, weight: .regular, design: .monospaced))
-                .foregroundStyle(Color.white)
+            // Hint text — only when idle
+            if !viewModel.isRecording {
+                Text("Tap to speak")
+                    .font(.system(size: 14, weight: .regular, design: .monospaced))
+                    .foregroundStyle(Color.white.opacity(0.5))
+                    .transition(.opacity)
+            }
+        }
+        .animation(.easeInOut(duration: 0.3), value: viewModel.isRecording)
+    }
+
+    // MARK: - Record Tap Handler
+
+    private func handleRecordTap() {
+        if viewModel.isRecording {
+            // Tap 2: Stop → process → navigate
+            viewModel.stopRecordingAndProcess()
+        } else {
+            // Tap 1: Start recording
+            viewModel.startRecording()
         }
     }
 
@@ -204,25 +239,6 @@ struct RecordView: View {
             Capsule()
                 .fill(Color.white.opacity(0.04))
         )
-    }
-
-    // MARK: - Long Press Gesture
-
-    private var longPressGesture: some Gesture {
-        LongPressGesture(minimumDuration: 0.2)
-            .onChanged { _ in
-                guard viewModel.inputMode == .voice,
-                      !viewModel.isProcessing, !viewModel.isRecording else { return }
-                viewModel.startRecording()
-                withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) {
-                    pulseScale = 1.6
-                }
-            }
-            .onEnded { _ in
-                guard viewModel.isRecording else { return }
-                pulseScale = 1.0
-                viewModel.stopRecordingAndProcess()
-            }
     }
 }
 

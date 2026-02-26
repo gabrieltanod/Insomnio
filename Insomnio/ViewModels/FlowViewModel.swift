@@ -125,7 +125,8 @@ final class FlowViewModel {
     func saveAndFinish(context: ModelContext) {
         let log = DailyLog(
             rawTranscript: transcript,
-            extractedThoughts: extractedThoughts
+            extractedThoughts: extractedThoughts,
+            audioFilePath: speechService.savedAudioURL
         )
         context.insert(log)
         isExiting = true

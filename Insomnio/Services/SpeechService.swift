@@ -10,6 +10,7 @@ import Foundation
 import Speech
 
 /// Real-time offline speech-to-text using SFSpeechRecognizer + AVAudioEngine.
+/// Simultaneously saves the audio to disk for later playback.
 @Observable
 final class SpeechService {
 
@@ -18,12 +19,16 @@ final class SpeechService {
     private(set) var isListening = false
     private(set) var transcript: String = ""
 
+    /// URL of the most recently saved audio recording.
+    private(set) var savedAudioURL: URL?
+
     // MARK: - Private Properties
 
     private let speechRecognizer: SFSpeechRecognizer?
     private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
     private var recognitionTask: SFSpeechRecognitionTask?
     private let audioEngine = AVAudioEngine()
+    private var audioFile: AVAudioFile?
 
     // MARK: - Init
 
@@ -56,6 +61,7 @@ final class SpeechService {
     // MARK: - Dictation
 
     /// Starts real-time dictation. Updates `transcript` as speech is recognized.
+    /// Audio is simultaneously saved to a .m4a file in the app's documents directory.
     func startDictation() throws {
         // Cancel any existing task
         stopDictation()
@@ -78,6 +84,10 @@ final class SpeechService {
         // Reset transcript
         transcript = ""
 
+        // Prepare audio file for saving
+        let fileURL = Self.generateAudioFileURL()
+        self.savedAudioURL = fileURL
+
         // Start recognition task
         recognitionTask = speechRecognizer.recognitionTask(with: request) { [weak self] result, error in
             guard let self else { return }
@@ -91,12 +101,29 @@ final class SpeechService {
             }
         }
 
-        // Install audio tap
+        // Install audio tap — feed to recognizer AND write to file
         let inputNode = audioEngine.inputNode
         let recordingFormat = inputNode.outputFormat(forBus: 0)
 
-        inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { buffer, _ in
+        // Create the audio file with the same format as the input
+        do {
+            audioFile = try AVAudioFile(
+                forWriting: fileURL,
+                settings: recordingFormat.settings,
+                commonFormat: recordingFormat.commonFormat,
+                interleaved: recordingFormat.isInterleaved
+            )
+        } catch {
+            // If file creation fails, still proceed with recognition (just no playback)
+            audioFile = nil
+        }
+
+        inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { [weak self] buffer, _ in
+            // Feed to speech recognizer
             request.append(buffer)
+
+            // Write to file for playback
+            try? self?.audioFile?.write(from: buffer)
         }
 
         // Start audio engine
@@ -121,9 +148,24 @@ final class SpeechService {
             audioEngine.stop()
             audioEngine.inputNode.removeTap(onBus: 0)
         }
+        audioFile = nil
         isListening = false
 
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+    }
+
+    // MARK: - File Management
+
+    /// Generates a unique file URL in the app's documents directory.
+    private static func generateAudioFileURL() -> URL {
+        let documentsDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let audioDir = documentsDir.appendingPathComponent("Recordings", isDirectory: true)
+
+        // Ensure the directory exists
+        try? FileManager.default.createDirectory(at: audioDir, withIntermediateDirectories: true)
+
+        let filename = "recording_\(Date.now.timeIntervalSince1970).caf"
+        return audioDir.appendingPathComponent(filename)
     }
 }
 
