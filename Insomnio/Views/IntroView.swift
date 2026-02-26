@@ -21,16 +21,16 @@ struct IntroView: View {
                 Spacer()
 
                 Text("Somebody's having\ntrouble sleeping.")
-                    .font(.system(size: 28, weight: .medium, design: .monospaced))
-                    .foregroundStyle(Color("Ash"))
+                    .font(.system(size: 25, weight: .medium, design: .monospaced))
+                    .foregroundStyle(Color.white)
                     .multilineTextAlignment(.center)
 
                 Button {
                     viewModel.skipIntro()
                 } label: {
                     Image(systemName: "arrow.right.circle.fill")
-                        .font(.system(size: 48))
-                        .foregroundStyle(Color(red: 0.85, green: 0.55, blue: 0.35))
+                        .font(.system(size: 40))
+                        .foregroundStyle(Color("Ash"))
                 }
 
                 Spacer()

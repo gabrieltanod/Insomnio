@@ -46,7 +46,7 @@ struct ReviewView: View {
                 Text(viewModel.extractedThoughts.isEmpty
                      ? "Anything else?"
                      : "Here's what's on your mind:")
-                    .font(.system(size: 22, weight: .medium, design: .serif))
+                    .font(.system(size: 22, weight: .medium, design: .monospaced))
                     .foregroundStyle(Color(red: 0.85, green: 0.55, blue: 0.35))
                     .opacity(headerOpacity)
                     .animation(.easeInOut(duration: 0.3), value: viewModel.extractedThoughts.isEmpty)
@@ -85,7 +85,7 @@ struct ReviewView: View {
                         viewModel.saveAndFinish(context: modelContext)
                     } label: {
                         Text("Yes, save for tomorrow")
-                            .font(.system(size: 16, weight: .semibold, design: .serif))
+                            .font(.system(size: 16, weight: .semibold, design: .monospaced))
                             .foregroundStyle(.black)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 16)
@@ -101,7 +101,7 @@ struct ReviewView: View {
                         viewModel.discardAndFinish()
                     } label: {
                         Text("Yes, don't save it tho\nits just rambling")
-                            .font(.system(size: 14, weight: .regular, design: .serif))
+                            .font(.system(size: 14, weight: .regular, design: .monospaced))
                             .foregroundStyle(Color(red: 0.6, green: 0.4, blue: 0.25))
                             .multilineTextAlignment(.center)
                             .padding(.vertical, 12)
@@ -194,7 +194,7 @@ struct ReviewView: View {
                     .clipShape(Circle())
                     .overlay(alignment: .topTrailing) {
                         deleteButton(index: index, color: color)
-                            .offset(x: 4, y: -4)
+                            .offset(x: -100, y: 0)
                     }
 
             case .roundedRect:
@@ -211,7 +211,7 @@ struct ReviewView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 16))
                     .overlay(alignment: .topTrailing) {
                         deleteButton(index: index, color: color)
-                            .offset(x: 6, y: -6)
+                            .offset(x: 5, y: -5)
                     }
 
             case .capsule:
@@ -228,7 +228,7 @@ struct ReviewView: View {
                     .clipShape(Capsule())
                     .overlay(alignment: .topTrailing) {
                         deleteButton(index: index, color: color)
-                            .offset(x: 6, y: -6)
+                            .offset(x: 5, y: -5)
                     }
             }
         }
@@ -274,7 +274,7 @@ struct ReviewView: View {
                 }
             )
         )
-        .font(.system(size: 14, weight: .medium, design: .serif))
+        .font(.system(size: 14, weight: .medium, design: .monospaced))
         .foregroundStyle(Color(red: 0.9, green: 0.85, blue: 0.78))
         .multilineTextAlignment(.center)
         .focused($focusedIndex, equals: index)

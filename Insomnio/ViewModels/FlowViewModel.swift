@@ -54,6 +54,7 @@ final class FlowViewModel {
 
     var extractedThoughts: [String] = []
     private(set) var isProcessing = false
+    private(set) var isExiting = false
 
     // MARK: - Dependencies
 
@@ -126,6 +127,7 @@ final class FlowViewModel {
             extractedThoughts: extractedThoughts
         )
         context.insert(log)
+        isExiting = true
         navigateTo(.exit)
     }
 
@@ -133,6 +135,7 @@ final class FlowViewModel {
     func discardAndFinish() {
         transcript = ""
         extractedThoughts = []
+        isExiting = true
         navigateTo(.exit)
     }
 
@@ -169,6 +172,7 @@ final class FlowViewModel {
         extractedThoughts = []
         isRecording = false
         isProcessing = false
+        isExiting = false
         inputMode = .voice
     }
 

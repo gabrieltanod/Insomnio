@@ -27,9 +27,9 @@ struct RecordView: View {
 
                 Text(viewModel.inputMode == .voice
                      ? "Let me hear about it."
-                     : "Let me read about it.")
-                    .font(.system(size: 28, weight: .medium, design: .serif))
-                    .foregroundStyle(Color(red: 0.85, green: 0.55, blue: 0.35))
+                     : "Let me hear about it.")
+                    .font(.system(size: 25, weight: .medium, design: .monospaced))
+                    .foregroundStyle(Color.white)
                     .multilineTextAlignment(.center)
                     .opacity(textOpacity)
                     .animation(.easeInOut(duration: 0.3), value: viewModel.inputMode)
@@ -43,8 +43,8 @@ struct RecordView: View {
                         .scaleEffect(1.5)
 
                     Text("Processing your thoughts…")
-                        .font(.system(size: 16, weight: .regular, design: .serif))
-                        .foregroundStyle(Color(red: 0.7, green: 0.45, blue: 0.25))
+                        .font(.system(size: 16, weight: .regular, design: .monospaced))
+                        .foregroundStyle(Color.white)
 
                 } else if viewModel.inputMode == .voice {
 
@@ -90,7 +90,7 @@ struct RecordView: View {
                         ? "Listening…"
                         : viewModel.speechService.transcript)
                      : "")
-                    .font(.system(size: 15, weight: .regular, design: .serif))
+                    .font(.system(size: 15, weight: .regular, design: .monospaced))
                     .foregroundStyle(Color(red: 0.65, green: 0.42, blue: 0.25).opacity(0.8))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 32)
@@ -118,8 +118,8 @@ struct RecordView: View {
             }
 
             Text(viewModel.isRecording ? "Release to stop" : "Hold to speak")
-                .font(.system(size: 14, weight: .regular, design: .serif))
-                .foregroundStyle(Color(red: 0.6, green: 0.4, blue: 0.25))
+                .font(.system(size: 14, weight: .regular, design: .monospaced))
+                .foregroundStyle(Color.white)
         }
     }
 
@@ -128,7 +128,7 @@ struct RecordView: View {
     private var textModeContent: some View {
         VStack(spacing: 20) {
             TextEditor(text: $viewModel.transcript)
-                .font(.system(size: 16, weight: .regular, design: .serif))
+                .font(.system(size: 16, weight: .regular, design: .monospaced))
                 .foregroundStyle(Color(red: 0.85, green: 0.55, blue: 0.35))
                 .scrollContentBackground(.hidden)
                 .background(
@@ -148,7 +148,7 @@ struct RecordView: View {
                                 .isEmpty else { return }
                             viewModel.submitTextAndProcess()
                         }
-                        .font(.system(size: 16, weight: .semibold, design: .serif))
+                        .font(.system(size: 16, weight: .semibold, design: .monospaced))
                         .foregroundStyle(Color(red: 0.85, green: 0.55, blue: 0.35))
                     }
                 }
@@ -157,7 +157,7 @@ struct RecordView: View {
                 }
 
             Text("Type what's on your mind, then tap Done.")
-                .font(.system(size: 13, weight: .regular, design: .serif))
+                .font(.system(size: 13, weight: .regular, design: .monospaced))
                 .foregroundStyle(Color(red: 0.5, green: 0.35, blue: 0.2))
         }
     }

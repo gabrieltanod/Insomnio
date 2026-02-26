@@ -17,6 +17,9 @@ struct WovenThreadBackground: View {
     // Animation speed multiplier: 1.0 = normal, 0.0 = frozen
     @State private var animationSpeed: Double = 1.0
 
+    // Exit dissolve opacity: 1 = visible, 0 = dissolved into black
+    @State private var dissolveOpacity: Double = 1.0
+
     // Thread configuration
     private let threadCount = 6
     private let pointsPerThread = 80
@@ -72,6 +75,7 @@ struct WovenThreadBackground: View {
                 }
             }
         }
+        .opacity(dissolveOpacity)
         .ignoresSafeArea()
         .background(.black)
         .onChange(of: viewModel.isRecording) { _, newValue in
@@ -90,6 +94,16 @@ struct WovenThreadBackground: View {
                 withAnimation(.easeIn(duration: 0.4)) {
                     animationSpeed = 1.0
                 }
+            }
+        }
+        .onChange(of: viewModel.isExiting) { _, newValue in
+            if newValue {
+                // 8-second graceful dissolve into pure OLED black
+                withAnimation(.easeOut(duration: 8.0)) {
+                    dissolveOpacity = 0.0
+                }
+            } else {
+                dissolveOpacity = 1.0
             }
         }
     }
