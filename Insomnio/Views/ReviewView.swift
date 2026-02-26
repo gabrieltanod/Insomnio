@@ -17,6 +17,11 @@ struct ReviewView: View {
     @State private var thoughtOpacities: [Double] = []
     @State private var buttonsOpacity: Double = 0
 
+    @FocusState private var focusedIndex: Int?
+
+    /// Tracks the previous focused index so we can clean up on blur.
+    @State private var lastFocusedIndex: Int?
+
     // Shape colors
     private let shapeColors: [Color] = [
         Color(red: 0.80, green: 0.30, blue: 0.20),  // Warm red
@@ -24,22 +29,52 @@ struct ReviewView: View {
         Color(red: 0.65, green: 0.42, blue: 0.25),  // Muted brown
     ]
 
+    private let charLimit = 30
+
     var body: some View {
         ZStack {
             WovenThreadBackground(viewModel: viewModel)
+                .opacity(focusedIndex != nil ? 0.4 : 1.0)
+                .scaleEffect(focusedIndex != nil ? 0.95 : 1.0)
+                .animation(.easeInOut(duration: 0.3), value: focusedIndex)
 
-            VStack(spacing: 28) {
+            VStack(spacing: 24) {
                 Spacer()
 
-                Text("Here's what's on your mind:")
+                // MARK: - Header
+
+                Text(viewModel.extractedThoughts.isEmpty
+                     ? "Anything else?"
+                     : "Here's what's on your mind:")
                     .font(.system(size: 22, weight: .medium, design: .serif))
                     .foregroundStyle(Color(red: 0.85, green: 0.55, blue: 0.35))
                     .opacity(headerOpacity)
+                    .animation(.easeInOut(duration: 0.3), value: viewModel.extractedThoughts.isEmpty)
 
                 // MARK: - Dynamic Shapes
 
-                thoughtShapes
+                thoughtSlots
                     .padding(.horizontal, 24)
+                    .animation(.spring(response: 0.4, dampingFraction: 0.8), value: viewModel.extractedThoughts.count)
+
+                // MARK: - Add Button
+
+                if viewModel.extractedThoughts.count < 3 {
+                    Button {
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                            viewModel.addThought()
+                        }
+                        // Focus the newly added empty thought
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            focusedIndex = viewModel.extractedThoughts.count - 1
+                        }
+                    } label: {
+                        Image(systemName: "plus.circle")
+                            .font(.system(size: 28))
+                            .foregroundStyle(Color(red: 0.65, green: 0.42, blue: 0.25).opacity(0.6))
+                    }
+                    .transition(.opacity.combined(with: .scale))
+                }
 
                 Spacer()
 
@@ -59,6 +94,8 @@ struct ReviewView: View {
                                     .fill(Color(red: 0.85, green: 0.55, blue: 0.35))
                             )
                     }
+                    .disabled(viewModel.extractedThoughts.isEmpty)
+                    .opacity(viewModel.extractedThoughts.isEmpty ? 0.5 : 1.0)
 
                     Button {
                         viewModel.discardAndFinish()
@@ -76,44 +113,54 @@ struct ReviewView: View {
             }
         }
         .onAppear {
-            // Initialize opacities based on actual count
             thoughtOpacities = Array(repeating: 0, count: viewModel.extractedThoughts.count)
             animateEntrance()
+        }
+        .onChange(of: focusedIndex) { oldValue, _ in
+            // Auto-delete empty thoughts when focus leaves
+            if let old = oldValue {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                    if viewModel.extractedThoughts.indices.contains(old),
+                       viewModel.extractedThoughts[old]
+                           .trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                            viewModel.removeThought(at: old)
+                        }
+                    }
+                }
+            }
         }
         .navigationBarBackButtonHidden(true)
     }
 
-    // MARK: - Thought Shapes
+    // MARK: - Dynamic Slot Layout
 
     @ViewBuilder
-    private var thoughtShapes: some View {
+    private var thoughtSlots: some View {
         let thoughts = viewModel.extractedThoughts
 
         switch thoughts.count {
+        case 0:
+            EmptyView()
+
         case 1:
-            // Single shape centered
-            thoughtShape(index: 0, thought: thoughts[0], shape: .circle)
+            thoughtCard(index: 0, shape: .circle)
 
         case 2:
-            // Two shapes evenly spaced
             VStack(spacing: 20) {
-                thoughtShape(index: 0, thought: thoughts[0], shape: .circle)
-                thoughtShape(index: 1, thought: thoughts[1], shape: .roundedRect)
+                thoughtCard(index: 0, shape: .circle)
+                thoughtCard(index: 1, shape: .roundedRect)
             }
 
-        case 3:
-            // Three shapes in vertical layout
+        default: // 3
             VStack(spacing: 16) {
-                thoughtShape(index: 0, thought: thoughts[0], shape: .circle)
+                thoughtCard(index: 0, shape: .circle)
 
                 HStack(spacing: 16) {
-                    thoughtShape(index: 1, thought: thoughts[1], shape: .roundedRect)
-                    thoughtShape(index: 2, thought: thoughts[2], shape: .capsule)
+                    thoughtCard(index: 1, shape: .roundedRect)
+                    thoughtCard(index: 2, shape: .capsule)
                 }
             }
-
-        default:
-            EmptyView()
         }
     }
 
@@ -123,81 +170,118 @@ struct ReviewView: View {
         case circle, roundedRect, capsule
     }
 
+    // MARK: - Thought Card
+
     @ViewBuilder
-    private func thoughtShape(index: Int, thought: String, shape: ShapeType) -> some View {
-        let opacity = index < thoughtOpacities.count ? thoughtOpacities[index] : 1.0
+    private func thoughtCard(index: Int, shape: ShapeType) -> some View {
         let color = shapeColors[index % shapeColors.count]
+        let isFocused = focusedIndex == index
+        let isDimmed = focusedIndex != nil && !isFocused
 
         Group {
             switch shape {
             case .circle:
-                Text(thought)
-                    .font(.system(size: 14, weight: .medium, design: .serif))
-                    .foregroundStyle(Color(red: 0.9, green: 0.85, blue: 0.78))
-                    .multilineTextAlignment(.center)
-                    .padding(24)
+                cardTextField(index: index)
+                    .padding(20)
                     .frame(minWidth: 140, minHeight: 140)
                     .background(
                         Circle()
                             .fill(.ultraThinMaterial)
                             .environment(\.colorScheme, .dark)
                     )
-                    .overlay(
-                        Circle()
-                            .fill(color.opacity(0.15))
-                    )
-                    .overlay(
-                        Circle()
-                            .strokeBorder(color.opacity(1), lineWidth: 1)
-                    )
+                    .overlay(Circle().fill(color.opacity(0.15)))
+                    .overlay(Circle().strokeBorder(color, lineWidth: 1))
                     .clipShape(Circle())
+                    .overlay(alignment: .topTrailing) {
+                        deleteButton(index: index, color: color)
+                            .offset(x: 4, y: -4)
+                    }
 
             case .roundedRect:
-                Text(thought)
-                    .font(.system(size: 14, weight: .medium, design: .serif))
-                    .foregroundStyle(Color(red: 0.9, green: 0.85, blue: 0.78))
-                    .multilineTextAlignment(.center)
-                    .padding(20)
+                cardTextField(index: index)
+                    .padding(16)
                     .frame(maxWidth: .infinity, minHeight: 80)
                     .background(
                         RoundedRectangle(cornerRadius: 16)
                             .fill(.ultraThinMaterial)
                             .environment(\.colorScheme, .dark)
                     )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(color.opacity(0.15))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16)
-                            .strokeBorder(color.opacity(1), lineWidth: 1)
-                    )
+                    .overlay(RoundedRectangle(cornerRadius: 16).fill(color.opacity(0.15)))
+                    .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(color, lineWidth: 1))
                     .clipShape(RoundedRectangle(cornerRadius: 16))
+                    .overlay(alignment: .topTrailing) {
+                        deleteButton(index: index, color: color)
+                            .offset(x: 6, y: -6)
+                    }
 
             case .capsule:
-                Text(thought)
-                    .font(.system(size: 14, weight: .medium, design: .serif))
-                    .foregroundStyle(Color(red: 0.9, green: 0.85, blue: 0.78))
-                    .multilineTextAlignment(.center)
-                    .padding(20)
+                cardTextField(index: index)
+                    .padding(16)
                     .frame(maxWidth: .infinity, minHeight: 80)
                     .background(
                         Capsule()
                             .fill(.ultraThinMaterial)
                             .environment(\.colorScheme, .dark)
                     )
-                    .overlay(
-                        Capsule()
-                            .fill(color.opacity(0.15))
-                    )
-                    .overlay(
-                        Capsule()
-                            .strokeBorder(color.opacity(1), lineWidth: 1)
-                    )
+                    .overlay(Capsule().fill(color.opacity(0.15)))
+                    .overlay(Capsule().strokeBorder(color, lineWidth: 1))
                     .clipShape(Capsule())
+                    .overlay(alignment: .topTrailing) {
+                        deleteButton(index: index, color: color)
+                            .offset(x: 6, y: -6)
+                    }
             }
         }
-        .opacity(opacity)
+        .scaleEffect(isDimmed ? 0.9 : 1.0)
+        .opacity(isDimmed ? 0.4 : 1.0)
+        .animation(.easeInOut(duration: 0.25), value: focusedIndex)
+        .transition(.scale.combined(with: .opacity))
+    }
+
+    // MARK: - Delete Button
+
+    private func deleteButton(index: Int, color: Color) -> some View {
+        Button {
+            focusedIndex = nil
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                viewModel.removeThought(at: index)
+            }
+        } label: {
+            Image(systemName: "xmark.circle.fill")
+                .font(.system(size: 20))
+                .foregroundStyle(color.opacity(0.7))
+                .background(
+                    Circle()
+                        .fill(.black.opacity(0.5))
+                        .frame(width: 18, height: 18)
+                )
+        }
+    }
+
+    // MARK: - Card TextField
+
+    private func cardTextField(index: Int) -> some View {
+        TextField(
+            "Tap to type…",
+            text: Binding(
+                get: {
+                    guard viewModel.extractedThoughts.indices.contains(index) else { return "" }
+                    return viewModel.extractedThoughts[index]
+                },
+                set: { newValue in
+                    guard viewModel.extractedThoughts.indices.contains(index) else { return }
+                    viewModel.extractedThoughts[index] = String(newValue.prefix(charLimit))
+                }
+            )
+        )
+        .font(.system(size: 14, weight: .medium, design: .serif))
+        .foregroundStyle(Color(red: 0.9, green: 0.85, blue: 0.78))
+        .multilineTextAlignment(.center)
+        .focused($focusedIndex, equals: index)
+        .submitLabel(.done)
+        .onSubmit {
+            focusedIndex = nil
+        }
     }
 
     // MARK: - Staggered Animation

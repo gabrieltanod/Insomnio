@@ -52,7 +52,7 @@ final class FlowViewModel {
 
     // MARK: - Summary
 
-    private(set) var extractedThoughts: [String] = []
+    var extractedThoughts: [String] = []
     private(set) var isProcessing = false
 
     // MARK: - Dependencies
@@ -134,6 +134,25 @@ final class FlowViewModel {
         transcript = ""
         extractedThoughts = []
         navigateTo(.exit)
+    }
+
+    // MARK: - Thought CRUD
+
+    /// Appends an empty thought for the user to fill in. Max 3.
+    func addThought() {
+        guard extractedThoughts.count < 3 else { return }
+        extractedThoughts.append("")
+    }
+
+    /// Removes a thought at the given index.
+    func removeThought(at index: Int) {
+        guard extractedThoughts.indices.contains(index) else { return }
+        extractedThoughts.remove(at: index)
+    }
+
+    /// Removes any thoughts that are empty or whitespace-only.
+    func cleanupEmptyThoughts() {
+        extractedThoughts.removeAll { $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
     }
 
     // MARK: - Navigation
