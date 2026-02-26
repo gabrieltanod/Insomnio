@@ -14,6 +14,9 @@ struct WovenThreadBackground: View {
     // Smooth interpolation value: 0 = idle, 1 = active
     @State private var intensity: Double = 0
 
+    // Animation speed multiplier: 1.0 = normal, 0.0 = frozen
+    @State private var animationSpeed: Double = 1.0
+
     // Thread configuration
     private let threadCount = 6
     private let pointsPerThread = 80
@@ -29,9 +32,10 @@ struct WovenThreadBackground: View {
             Canvas { context, size in
                 let center = CGPoint(x: size.width / 2, y: size.height / 2)
                 let currentIntensity = intensity
+                let currentSpeed = animationSpeed
 
-                // Interpolate speed: idle = 0.3, active = 0.9
-                let speed = 0.3 + currentIntensity * 0.6
+                // Interpolate speed: idle = 0.3, active = 0.9, then modulated by animationSpeed
+                let speed = (0.3 + currentIntensity * 0.6) * currentSpeed
 
                 // Interpolate stroke width: idle = 2, active = 2.5
                 let strokeWidth = 2.0 + currentIntensity * 0.5
@@ -73,6 +77,19 @@ struct WovenThreadBackground: View {
         .onChange(of: viewModel.isRecording) { _, newValue in
             withAnimation(.easeInOut(duration: 0.6)) {
                 intensity = newValue ? 1.0 : 0.0
+            }
+        }
+        .onChange(of: viewModel.isProcessing) { _, newValue in
+            if newValue {
+                // Decelerate to frozen over 1.2 seconds
+                withAnimation(.easeOut(duration: 1.2)) {
+                    animationSpeed = 0.0
+                }
+            } else {
+                // Restore normal speed
+                withAnimation(.easeIn(duration: 0.4)) {
+                    animationSpeed = 1.0
+                }
             }
         }
     }

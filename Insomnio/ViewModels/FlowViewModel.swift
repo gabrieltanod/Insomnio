@@ -17,6 +17,13 @@ enum FlowStep: Hashable {
     case exit
 }
 
+// MARK: - Input Mode
+
+enum InputMode {
+    case voice
+    case text
+}
+
 // MARK: - ViewModel
 
 @Observable
@@ -27,12 +34,18 @@ final class FlowViewModel {
     var currentStep: FlowStep = .intro
     var path: [FlowStep] = []
 
+    // MARK: - Input Mode
+
+    var inputMode: InputMode = .voice
+
     // MARK: - Intro
 
     /// Advances past the intro screen to the record screen.
     func skipIntro() {
         navigateTo(.record)
     }
+
+    // MARK: - Recording State
 
     private(set) var isRecording = false
     var transcript: String = ""
@@ -44,37 +57,57 @@ final class FlowViewModel {
 
     // MARK: - Dependencies
 
-    private let audioRecorder: AudioRecorderService
+    let speechService: SpeechService
     private let summaryService: any SummaryServiceProtocol
 
     // MARK: - Init
 
     init(
-        audioRecorder: AudioRecorderService = AudioRecorderService(),
-        summaryService: any SummaryServiceProtocol = MockSummaryService()
+        speechService: SpeechService = SpeechService(),
+        summaryService: any SummaryServiceProtocol = BrainDumpService()
     ) {
-        self.audioRecorder = audioRecorder
+        self.speechService = speechService
         self.summaryService = summaryService
     }
 
-    // MARK: - Recording Logic
+    // MARK: - Voice Recording
 
     func startRecording() {
-        audioRecorder.startRecording()
-        isRecording = true
-        // In a real implementation, speech-to-text would populate `transcript`.
-        transcript = "I can't stop thinking about work tomorrow. The presentation isn't ready and I keep replaying that awkward conversation with my manager. Also I haven't been to the gym in two weeks."
+        do {
+            try speechService.startDictation()
+            isRecording = true
+        } catch {
+            // Fallback: stay on record screen, user can retry or switch to text
+            isRecording = false
+        }
     }
 
     func stopRecordingAndProcess() {
-        audioRecorder.stopRecording()
+        speechService.stopDictation()
+        transcript = speechService.transcript
         isRecording = false
+        processTranscript()
+    }
+
+    // MARK: - Text Input
+
+    func submitTextAndProcess() {
+        processTranscript()
+    }
+
+    // MARK: - Processing Pipeline
+
+    private func processTranscript() {
         isProcessing = true
 
         Task {
             do {
                 let thoughts = try await summaryService.summarize(transcript: transcript)
                 self.extractedThoughts = thoughts
+
+                // Hold the freeze for 1.5 seconds so the animation visually decelerates
+                try await Task.sleep(for: .seconds(1.5))
+
                 self.isProcessing = false
                 navigateTo(.review)
             } catch {
@@ -90,8 +123,7 @@ final class FlowViewModel {
     func saveAndFinish(context: ModelContext) {
         let log = DailyLog(
             rawTranscript: transcript,
-            extractedThoughts: extractedThoughts,
-            audioFilePath: audioRecorder.currentFileURL
+            extractedThoughts: extractedThoughts
         )
         context.insert(log)
         navigateTo(.exit)
@@ -118,6 +150,7 @@ final class FlowViewModel {
         extractedThoughts = []
         isRecording = false
         isProcessing = false
+        inputMode = .voice
     }
 
     // MARK: - Preview Helpers
@@ -126,10 +159,16 @@ final class FlowViewModel {
     static var previewWithThoughts: FlowViewModel {
         let vm = FlowViewModel()
         vm.extractedThoughts = [
-            "You're worried about tomorrow's meeting — specifically the presentation deck.",
-            "There's unresolved tension from a conversation earlier today.",
-            "You feel behind on a personal goal you set last month."
+            "email professor",
+            "finish project",
+            "stress"
         ]
+        return vm
+    }
+
+    static var previewSingleThought: FlowViewModel {
+        let vm = FlowViewModel()
+        vm.extractedThoughts = ["sleep"]
         return vm
     }
     #endif
