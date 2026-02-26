@@ -139,12 +139,18 @@ struct ReviewView: View {
                     .frame(minWidth: 140, minHeight: 140)
                     .background(
                         Circle()
-                            .fill(color.opacity(0.15))
-                            .overlay(
-                                Circle()
-                                    .strokeBorder(color.opacity(0.4), lineWidth: 1)
-                            )
+                            .fill(.ultraThinMaterial)
+                            .environment(\.colorScheme, .dark)
                     )
+                    .overlay(
+                        Circle()
+                            .fill(color.opacity(0.15))
+                    )
+                    .overlay(
+                        Circle()
+                            .strokeBorder(color.opacity(1), lineWidth: 1)
+                    )
+                    .clipShape(Circle())
 
             case .roundedRect:
                 Text(thought)
@@ -155,12 +161,18 @@ struct ReviewView: View {
                     .frame(maxWidth: .infinity, minHeight: 80)
                     .background(
                         RoundedRectangle(cornerRadius: 16)
-                            .fill(color.opacity(0.15))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .strokeBorder(color.opacity(0.4), lineWidth: 1)
-                            )
+                            .fill(.ultraThinMaterial)
+                            .environment(\.colorScheme, .dark)
                     )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(color.opacity(0.15))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .strokeBorder(color.opacity(1), lineWidth: 1)
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
 
             case .capsule:
                 Text(thought)
@@ -171,12 +183,18 @@ struct ReviewView: View {
                     .frame(maxWidth: .infinity, minHeight: 80)
                     .background(
                         Capsule()
-                            .fill(color.opacity(0.15))
-                            .overlay(
-                                Capsule()
-                                    .strokeBorder(color.opacity(0.4), lineWidth: 1)
-                            )
+                            .fill(.ultraThinMaterial)
+                            .environment(\.colorScheme, .dark)
                     )
+                    .overlay(
+                        Capsule()
+                            .fill(color.opacity(0.15))
+                    )
+                    .overlay(
+                        Capsule()
+                            .strokeBorder(color.opacity(1), lineWidth: 1)
+                    )
+                    .clipShape(Capsule())
             }
         }
         .opacity(opacity)
