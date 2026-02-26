@@ -15,6 +15,7 @@ enum FlowStep: Hashable {
     case record
     case review
     case exit
+    case history
 }
 
 // MARK: - Input Mode

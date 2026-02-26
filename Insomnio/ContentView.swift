@@ -25,6 +25,8 @@ struct ContentView: View {
                         ReviewView(viewModel: viewModel)
                     case .exit:
                         ExitView(viewModel: viewModel)
+                    case .history:
+                        LogHistoryView(viewModel: viewModel)
                     }
                 }
         }

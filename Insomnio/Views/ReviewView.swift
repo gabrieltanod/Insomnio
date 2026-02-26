@@ -47,7 +47,7 @@ struct ReviewView: View {
                      ? "Anything else?"
                      : "Here's what's on your mind:")
                     .font(.system(size: 22, weight: .medium, design: .monospaced))
-                    .foregroundStyle(Color(red: 0.85, green: 0.55, blue: 0.35))
+                    .foregroundStyle(Color("Peach"))
                     .opacity(headerOpacity)
                     .animation(.easeInOut(duration: 0.3), value: viewModel.extractedThoughts.isEmpty)
 
